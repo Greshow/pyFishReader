@@ -119,7 +119,7 @@ def load_text(file_path):
 
 if __name__ == "__main__":
     # 设置命令行参数解析
-    parser = argparse.ArgumentParser(description='FishReader - 迷你文本阅读器')
+    parser = argparse.ArgumentParser(description='FishReader - 摸鱼阅读器')
     parser.add_argument('filename', help='要打开的文本文件路径')
     args = parser.parse_args()
     
