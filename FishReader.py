@@ -7,13 +7,13 @@ import time
 from pathlib import Path
 
 class FishReader:
-    def __init__(self, text, file_path):
+    def __init__(self, text, file_path, initial_index=0):
         self.text = text
         self.file_path = os.path.abspath(file_path)
         self.config_file = os.path.expanduser("~/.fishreader.json")
         
         # 加载配置
-        self.index = self.load_position()
+        self.index = initial_index if initial_index > 0 else self.load_position()
         self.settings = self.load_settings()
         
         # 自动翻页相关变量
@@ -249,15 +249,56 @@ def load_text(file_path):
         except UnicodeDecodeError:
             continue
     raise UnicodeDecodeError(f"无法解码文件: {file_path}")
+    
+    
+def search_text(text, search_str):
+    """搜索文本并输出所有匹配结果，不返回任何值"""
+    pos = 0
+    found = False
+    
+    print(f"搜索字符串: '{search_str}'")
+    print("-" * 50)
+    
+    while True:
+        pos = text.find(search_str, pos)
+        if pos == -1:
+            break
+            
+        # 获取所在行内容
+        line_start = text.rfind('\n', 0, pos) + 1
+        line_end = text.find('\n', pos)
+        if line_end == -1:
+            line_end = len(text)
+        line_content = text[line_start:line_end].strip()
+        
+        # 计算行号
+        line_number = text.count('\n', 0, line_start) + 1
+        
+        # 输出结果
+        print(f"位置: {pos} (行: {line_number})")
+        print(f"内容: {line_content}")
+        print("-" * 50)
+        
+        found = True
+        pos += len(search_str)  # 移动到下一个可能的位置
+    
+    if not found:
+        print(f"未找到字符串: '{search_str}'")
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='FishReader - 摸鱼阅读器')
-    parser.add_argument('filename', help='要打开的文本文件路径')
+    parser.add_argument('-f', '--file', dest='filename', required=True, help='要打开的文本文件路径')
+    parser.add_argument('-i', '--index', dest='index', type=int, default=0, help='指定开始阅读的位置(字符索引)')
+    parser.add_argument('-s', '--search', dest='search_str', help='搜索字符串并输出所在位置')
     args = parser.parse_args()
     
     try:
         text = load_text(args.filename)
-        FishReader(text, args.filename)
+        if (args.search_str):
+            search_text(text, args.search_str)
+            exit(0)
+        FishReader(text, args.filename, args.index)
     except FileNotFoundError:
         print(f"错误：文件 {args.filename} 不存在！")
     except Exception as e:
